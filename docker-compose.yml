@@ -1,0 +1,21 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: verilex
+      POSTGRES_USER: verilex
+      POSTGRES_PASSWORD: change-this-password
+    ports: ["5432:5432"]
+    volumes: [verilex_pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verilex -d verilex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: [verilex_redis:/data]
+volumes:
+  verilex_pgdata:
+  verilex_redis:

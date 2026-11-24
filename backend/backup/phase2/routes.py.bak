@@ -1,0 +1,88 @@
+from pathlib import Path
+from datetime import datetime,timezone
+import secrets
+from fastapi import APIRouter,Depends,HTTPException,UploadFile,File,BackgroundTasks
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select,desc
+from app.database import get_db,SessionLocal
+from app.models import User,Role,Document,AnalysisJob
+from app.schemas import RegisterIn,LoginIn,TokenOut,UserOut,AnalysisIn
+from app.security import hash_password,verify_password,make_token,current_user,roles
+from app.core.config import settings
+from app.services.extraction import ALLOWED,extract,language
+from app.services.analysis import run
+router=APIRouter(prefix="/api/v1")
+@router.post("/auth/register",response_model=TokenOut)
+async def register(data:RegisterIn,db:AsyncSession=Depends(get_db)):
+    email=data.email.lower()
+    if await db.scalar(select(User).where(User.email==email)): raise HTTPException(409,"Email already registered")
+    role=Role.ADMIN if settings.bootstrap_admin_email and email==settings.bootstrap_admin_email.lower() and data.password==settings.bootstrap_admin_password else Role.STUDENT
+    user=User(full_name=data.full_name,email=email,password_hash=hash_password(data.password),role=role);db.add(user);await db.commit();await db.refresh(user)
+    return TokenOut(access_token=make_token(user.id),user=user)
+@router.post("/auth/login",response_model=TokenOut)
+async def login(data:LoginIn,db:AsyncSession=Depends(get_db)):
+    user=await db.scalar(select(User).where(User.email==data.email.lower()))
+    if not user or not verify_password(data.password,user.password_hash) or not user.is_active: raise HTTPException(401,"Incorrect email or password")
+    return TokenOut(access_token=make_token(user.id),user=user)
+@router.get("/auth/me",response_model=UserOut)
+async def me(user:User=Depends(current_user)): return user
+@router.post("/documents/upload")
+async def upload(file:UploadFile=File(...),user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    name=Path(file.filename or "upload.txt").name; ext=Path(name).suffix.lower()
+    if ext not in ALLOWED: raise HTTPException(415,"Unsupported file type")
+    data=await file.read(settings.max_upload_mb*1024*1024+1)
+    if len(data)>settings.max_upload_mb*1024*1024: raise HTTPException(413,"File exceeds configured size limit")
+    folder=Path(settings.upload_dir).resolve();folder.mkdir(parents=True,exist_ok=True);path=folder/(secrets.token_hex(16)+ext);path.write_bytes(data)
+    try: text=extract(str(path))
+    except Exception as e:
+        path.unlink(missing_ok=True);raise HTTPException(422,f"Text extraction failed: {type(e).__name__}")
+    d=Document(owner_id=user.id,filename=name,file_type=ext[1:],file_size=len(data),storage_path=str(path),extracted_text=text,detected_language=language(text))
+    db.add(d);await db.commit();await db.refresh(d)
+    return {"id":d.id,"filename":name,"file_type":d.file_type,"file_size":d.file_size,"characters_extracted":len(text),"detected_language":d.detected_language}
+@router.get("/documents")
+async def documents(user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    rows=(await db.scalars(select(Document).where(Document.owner_id==user.id).order_by(desc(Document.created_at)))).all()
+    return [{"id":d.id,"filename":d.filename,"file_type":d.file_type,"file_size":d.file_size,"detected_language":d.detected_language} for d in rows]
+@router.delete("/documents/{doc_id}")
+async def delete_document(doc_id:int,user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    d=await db.scalar(select(Document).where(Document.id==doc_id,Document.owner_id==user.id))
+    if not d: raise HTTPException(404,"Document not found")
+    Path(d.storage_path).unlink(missing_ok=True);await db.delete(d);await db.commit();return {"deleted":True}
+async def process_job(job_id:int):
+    async with SessionLocal() as db:
+        job=await db.get(AnalysisJob,job_id)
+        if not job:return
+        job.status="PROCESSING";await db.commit()
+        try:
+            doc=await db.get(Document,job.document_id)
+            corpus=(await db.scalars(select(Document).where(Document.owner_id==job.user_id,Document.id!=doc.id))).all()
+            job.result_json=run(doc.extracted_text,doc.filename,job.analysis_type,[{"filename":d.filename,"text":d.extracted_text} for d in corpus])
+            job.status="COMPLETED";job.progress=100
+        except Exception as exc:
+            job.status="FAILED";job.error_message=type(exc).__name__
+        job.completed_at=datetime.now(timezone.utc);await db.commit()
+@router.post("/analysis/submit")
+async def submit(data:AnalysisIn,bg:BackgroundTasks,user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    doc=await db.scalar(select(Document).where(Document.id==data.document_id,Document.owner_id==user.id))
+    if not doc: raise HTTPException(404,"Document not found")
+    job=AnalysisJob(user_id=user.id,document_id=doc.id,analysis_type=data.analysis_type,status="QUEUED",progress=0);db.add(job);await db.commit();await db.refresh(job);bg.add_task(process_job,job.id)
+    return {"id":job.id,"status":job.status,"progress":job.progress}
+@router.get("/analysis")
+async def analyses(user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    rows=(await db.scalars(select(AnalysisJob).where(AnalysisJob.user_id==user.id).order_by(desc(AnalysisJob.created_at)))).all()
+    return [{"id":j.id,"document_id":j.document_id,"analysis_type":j.analysis_type,"status":j.status,"progress":j.progress} for j in rows]
+@router.get("/analysis/{job_id}")
+async def analysis(job_id:int,user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    j=await db.scalar(select(AnalysisJob).where(AnalysisJob.id==job_id,AnalysisJob.user_id==user.id))
+    if not j: raise HTTPException(404,"Analysis not found")
+    return {"id":j.id,"status":j.status,"progress":j.progress,"error":j.error_message,"result":j.result_json}
+@router.get("/analysis/{job_id}/report")
+async def report(job_id:int,user:User=Depends(current_user),db:AsyncSession=Depends(get_db)):
+    j=await db.scalar(select(AnalysisJob).where(AnalysisJob.id==job_id,AnalysisJob.user_id==user.id))
+    if not j: raise HTTPException(404,"Analysis not found")
+    if j.status!="COMPLETED": raise HTTPException(409,"Analysis is not complete")
+    return {"analysis_id":j.id,"generated_at":j.completed_at,"result":j.result_json,"notice":"Evidence is not a misconduct verdict."}
+@router.get("/admin/dashboard")
+async def admin(user:User=Depends(roles(Role.ADMIN,Role.SUPER_ADMIN)),db:AsyncSession=Depends(get_db)):
+    us=(await db.scalars(select(User))).all();ds=(await db.scalars(select(Document))).all();js=(await db.scalars(select(AnalysisJob))).all()
+    return {"users":len(us),"documents":len(ds),"analyses":len(js),"pending_jobs":sum(j.status in {"QUEUED","PROCESSING"} for j in js),"failed_jobs":sum(j.status=="FAILED" for j in js)}

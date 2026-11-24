@@ -1,0 +1,145 @@
+
+from pathlib import Path
+import re
+
+from pypdf import PdfReader
+from docx import Document as Docx
+
+
+ALLOWED = {
+    ".pdf",
+    ".docx",
+    ".txt",
+    ".py",
+    ".java",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".php",
+}
+
+
+def extract(path: str) -> str:
+    """
+    Extract readable text from supported document and code files.
+    Returns an empty string when the file contains no extractable text.
+    """
+
+    file_path = Path(path)
+    ext = file_path.suffix.lower()
+
+    if ext not in ALLOWED:
+        raise ValueError("Unsupported file extension")
+
+    if not file_path.exists() or not file_path.is_file():
+        raise FileNotFoundError("Document does not exist")
+
+    if ext == ".pdf":
+        reader = PdfReader(str(file_path))
+
+        if reader.is_encrypted:
+            try:
+                result = reader.decrypt("")
+                if result == 0:
+                    raise ValueError("Password-protected PDF")
+            except Exception as exc:
+                raise ValueError("Unable to read encrypted PDF") from exc
+
+        extracted_pages = []
+
+        for page in reader.pages:
+            page_text = page.extract_text() or ""
+            if page_text.strip():
+                extracted_pages.append(page_text)
+
+        return "\n\n".join(extracted_pages).strip()
+
+    if ext == ".docx":
+        document = Docx(str(file_path))
+
+        parts = []
+
+        # Extract normal paragraphs.
+        for paragraph in document.paragraphs:
+            if paragraph.text.strip():
+                parts.append(paragraph.text)
+
+        # Extract text from tables.
+        for table in document.tables:
+            for row in table.rows:
+                cells = [
+                    cell.text.strip()
+                    for cell in row.cells
+                    if cell.text.strip()
+                ]
+
+                if cells:
+                    parts.append(" | ".join(cells))
+
+        return "\n".join(parts).strip()
+
+    # TXT and supported source-code files.
+    return file_path.read_text(
+        encoding="utf-8-sig",
+        errors="replace",
+    ).strip()
+
+
+def language(text: str) -> str:
+    """
+    Detect language cautiously.
+    Short or empty documents return unknown.
+    """
+
+    cleaned = text.strip()
+
+    if len(cleaned) < 50:
+        return "unknown"
+
+    try:
+        from langdetect import detect, DetectorFactory
+
+        DetectorFactory.seed = 0
+
+        sample = cleaned[:5000]
+        return detect(sample)
+
+    except Exception:
+        return "unknown"
+
+
+def chunks(text: str, size: int = 900, overlap: int = 120):
+    """
+    Split text into overlapping chunks.
+    """
+
+    if size <= 0:
+        raise ValueError("Chunk size must be positive")
+
+    if overlap < 0 or overlap >= size:
+        raise ValueError("Overlap must be non-negative and smaller than size")
+
+    cleaned = re.sub(r"\s+", " ", text).strip()
+
+    if not cleaned:
+        return []
+
+    output = []
+    start = 0
+
+    while start < len(cleaned):
+        end = min(len(cleaned), start + size)
+
+        output.append(cleaned[start:end])
+
+        if end >= len(cleaned):
+            break
+
+        start = end - overlap
+
+    return output

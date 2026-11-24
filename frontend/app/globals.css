@@ -1,0 +1,845 @@
+
+@import "tailwindcss";
+
+/* =========================================
+   VERILEX AI - LIGHT THEME DESIGN SYSTEM
+========================================= */
+
+:root {
+  color-scheme: light;
+
+  --bg: #f5f6fc;
+  --surface: #ffffff;
+  --surface2: #eef0fa;
+  --surface3: #e5e8f5;
+
+  --text: #171b32;
+  --muted: #69708a;
+  --line: #e4e7f1;
+
+  --primary: #5146b8;
+  --primary-light: #806ee7;
+  --cyan: #19a9c2;
+  --green: #13966a;
+  --red: #d94b67;
+  --yellow: #d69a27;
+
+  --shadow: 0 18px 55px rgba(35, 32, 91, .08);
+  --small-shadow: 0 5px 20px rgba(35, 32, 91, .05);
+
+  --radius: 16px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0c1020;
+  --surface: #151b2e;
+  --surface2: #1d2540;
+  --surface3: #26304d;
+
+  --text: #edf0ff;
+  --muted: #a2abc5;
+  --line: #2b3551;
+
+  --primary: #a69aff;
+  --primary-light: #b9adff;
+  --cyan: #55d1e3;
+  --green: #4bd4a0;
+  --red: #ff8097;
+  --yellow: #f2c66d;
+
+  --shadow: 0 18px 55px rgba(0, 0, 0, .3);
+  --small-shadow: 0 5px 20px rgba(0, 0, 0, .18);
+}
+
+/* =========================================
+   GLOBAL RESET
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background .25s, color .25s;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(81, 70, 184, .18);
+  color: var(--text);
+}
+
+/* =========================================
+   MAIN LAYOUT
+========================================= */
+
+.shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      ellipse at 80% 0%,
+      rgba(118, 104, 232, .10),
+      transparent 35%
+    ),
+    var(--bg);
+}
+
+.container {
+  width: min(1160px, calc(100% - 36px));
+  margin: auto;
+}
+
+/* =========================================
+   TOP NAVIGATION
+========================================= */
+
+.top {
+  height: 74px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 5vw, 70px);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 3px 15px rgba(35, 32, 91, .025);
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 21px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -.5px;
+}
+
+.mark {
+  width: 37px;
+  height: 37px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #44369c, #9279f1);
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 19px;
+  font-weight: 900;
+  box-shadow: 0 5px 15px rgba(81, 70, 184, .2);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions a,
+.actions button {
+  white-space: nowrap;
+}
+
+/* =========================================
+   THEME SWITCHER
+========================================= */
+
+.switch {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.switch button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px;
+  border-radius: 8px;
+}
+
+.switch button[aria-pressed="true"] {
+  background: var(--surface2);
+  color: var(--primary);
+}
+
+/* =========================================
+   TYPOGRAPHY
+========================================= */
+
+.eyebrow {
+  display: inline-block;
+  color: var(--primary);
+  background: var(--surface2);
+  padding: 8px 12px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.gradient {
+  background: linear-gradient(
+    100deg,
+    var(--primary),
+    #9b70df,
+    var(--cyan)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 17px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    transform .2s,
+    box-shadow .2s,
+    background .2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.btn.primary,
+.primary {
+  background: linear-gradient(110deg, #5146b8, #806ee7);
+  color: white;
+  border: 0;
+}
+
+.btn.primary:hover {
+  background: linear-gradient(110deg, #44369c, #705bdb);
+}
+
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =========================================
+   HOMEPAGE HERO
+========================================= */
+
+.hero {
+  padding: 82px 0 55px;
+  display: grid;
+  grid-template-columns: 1fr .9fr;
+  gap: 45px;
+  align-items: center;
+}
+
+.hero h1 {
+  font-size: clamp(42px, 6vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -.055em;
+  margin: 22px 0;
+}
+
+.lead {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 650px;
+}
+
+/* =========================================
+   PREVIEW CARD
+========================================= */
+
+.preview {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: var(--shadow);
+  transform: rotate(1deg);
+}
+
+.preview .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.preview .row:last-child {
+  border-bottom: 0;
+}
+
+/* =========================================
+   FEATURES SECTION
+========================================= */
+
+.section {
+  padding: 42px 0 75px;
+}
+
+.section h2 {
+  font-size: 36px;
+  letter-spacing: -.04em;
+  margin: 15px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 17px;
+  margin-top: 28px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: var(--small-shadow);
+  transition:
+    transform .2s,
+    box-shadow .2s,
+    border-color .2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+  border-color: rgba(81, 70, 184, .3);
+}
+
+.card h3 {
+  font-size: 17px;
+  margin: 18px 0 10px;
+}
+
+.card p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.footer {
+  border-top: 1px solid var(--line);
+  padding: 25px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* =========================================
+   AUTHENTICATION PAGES
+========================================= */
+
+.auth-wrap {
+  min-height: calc(100vh - 74px);
+  display: grid;
+  place-items: center;
+  padding: 25px;
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(118, 104, 232, .10),
+      transparent 55%
+    ),
+    var(--bg);
+}
+
+.auth,
+.auth-card {
+  width: min(440px, 100%);
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.auth h1,
+.auth-card h1 {
+  margin: 16px 0 6px;
+  font-size: 27px;
+}
+
+.auth p,
+.auth-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  margin: 17px 0;
+}
+
+.field label,
+.auth-card label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.field input,
+.auth-card input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.field input:focus,
+.auth-card input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(81, 70, 184, .10);
+}
+
+.auth .btn,
+.auth-card .btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.error {
+  color: var(--red);
+  font-size: 13px;
+}
+
+/* =========================================
+   DASHBOARD LAYOUT
+========================================= */
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: calc(100vh - 74px);
+}
+
+.sidebar {
+  padding: 22px 13px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.side {
+  display: block;
+  padding: 13px 14px;
+  margin-bottom: 5px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background .2s, color .2s;
+}
+
+.side:hover,
+.side.active {
+  background: var(--surface2);
+  color: var(--primary);
+}
+
+.main {
+  padding: 30px clamp(16px, 4vw, 44px);
+  min-width: 0;
+}
+
+.main h1 {
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -.8px;
+  margin: 10px 0;
+}
+
+.main > p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* =========================================
+   DASHBOARD STATISTICS
+========================================= */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+  margin: 25px 0;
+}
+
+.stat {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--small-shadow);
+  transition: transform .2s, box-shadow .2s;
+}
+
+.stat:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+.stat span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stat strong {
+  display: block;
+  font-size: 29px;
+  margin-top: 9px;
+  letter-spacing: -.5px;
+  color: var(--primary);
+}
+
+/* =========================================
+   DASHBOARD PANELS
+========================================= */
+
+.panel {
+  margin-top: 20px;
+  padding: 23px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--small-shadow);
+  scroll-margin-top: 95px;
+}
+
+.panel h2 {
+  font-size: 19px;
+  margin: 0 0 19px;
+}
+
+/* =========================================
+   DOCUMENT UPLOAD
+========================================= */
+
+.drop {
+  border: 1.5px dashed var(--primary);
+  border-radius: 14px;
+  padding: 32px 22px;
+  text-align: center;
+  background: var(--surface2);
+  transition: background .2s, border-color .2s;
+}
+
+.drop:hover {
+  border-color: var(--cyan);
+  background: var(--surface3);
+}
+
+.drop p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.drop input[type="file"] {
+  display: block;
+  max-width: 100%;
+  margin: 20px auto;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.drop .btn {
+  margin-top: 10px;
+}
+
+/* =========================================
+   DOCUMENT TABLES
+========================================= */
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 560px;
+  font-size: 13px;
+}
+
+td,
+th {
+  text-align: left;
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  background: var(--surface2);
+}
+
+td {
+  color: var(--text);
+}
+
+tbody tr {
+  transition: background .2s;
+}
+
+tbody tr:hover {
+  background: var(--surface2);
+}
+
+td .btn {
+  padding: 8px 11px;
+  font-size: 11px;
+}
+
+/* =========================================
+   NOTIFICATIONS
+========================================= */
+
+.notice {
+  margin-top: 13px;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.notice.error {
+  color: var(--red);
+  background: rgba(217, 75, 103, .07);
+  border-color: rgba(217, 75, 103, .2);
+}
+
+/* =========================================
+   FORM ELEMENTS
+========================================= */
+
+input,
+textarea,
+select {
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5c9db;
+  border-radius: 20px;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #3b4662;
+}
+
+/* =========================================
+   RESPONSIVE TABLET
+========================================= */
+
+@media (max-width: 850px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 50px;
+  }
+
+  .preview {
+    transform: none;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .side {
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================
+   RESPONSIVE MOBILE
+========================================= */
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 42px;
+  }
+
+  .hero {
+    gap: 25px;
+    padding: 45px 0;
+  }
+
+  .top {
+    height: 65px;
+    padding: 0 12px;
+  }
+
+  .brand {
+    font-size: 18px;
+  }
+
+  .actions {
+    gap: 7px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .stat {
+    padding: 15px;
+  }
+
+  .stat strong {
+    font-size: 25px;
+  }
+
+  .main {
+    padding: 20px 12px;
+  }
+
+  .panel {
+    padding: 17px 13px;
+  }
+
+  .drop {
+    padding: 24px 12px;
+  }
+
+  .auth,
+  .auth-card {
+    padding: 22px;
+  }
+
+  .section {
+    padding: 35px 0 50px;
+  }
+
+  .section h2 {
+    font-size: 29px;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
